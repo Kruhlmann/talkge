@@ -1,0 +1,4 @@
+/target
+twitch-client-id
+twitch-client-secret
+*.db

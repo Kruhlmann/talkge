@@ -1,0 +1,29 @@
+SERVER_HOST ?= localhost
+SERVER_PORT ?= 8888
+SESSIONS_DB_FILE ?= sessions.db
+TALKGE_DB_FILE ?= talkge.db
+TWITCH_REDIRECT_URL ?= http://$(SERVER_HOST):$(SERVER_PORT)/auth/twitch/callback
+TWITCH_CLIENT_ID ?= $(shell cat twitch-client-id)
+TWITCH_CLIENT_SECRET ?= $(shell cat twitch-client-secret)
+LLAMA_URL ?= http://localhost:8071
+LLAMA_MODEL ?= model.gguf
+TTS_URL ?= http://localhost:8880
+TTS_VOICE ?= am_michael
+PUBLIC_URL ?= http://$(SERVER_HOST):$(SERVER_PORT)
+
+.PHONY: run
+run:
+	RUST_LOG=debug \
+	SERVER_HOST=$(SERVER_HOST) \
+	SERVER_PORT=$(SERVER_PORT) \
+	SESSIONS_DB_FILE=$(SESSIONS_DB_FILE) \
+	TALKGE_DB_FILE=$(TALKGE_DB_FILE) \
+	TWITCH_CLIENT_ID=$(TWITCH_CLIENT_ID) \
+	TWITCH_CLIENT_SECRET=$(TWITCH_CLIENT_SECRET) \
+	TWITCH_REDIRECT_URL=$(TWITCH_REDIRECT_URL) \
+	LLAMA_URL=$(LLAMA_URL) \
+	LLAMA_MODEL=$(LLAMA_MODEL) \
+	TTS_URL=$(TTS_URL) \
+	TTS_VOICE=$(TTS_VOICE) \
+	PUBLIC_URL=$(PUBLIC_URL) \
+	cargo run

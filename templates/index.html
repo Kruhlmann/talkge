@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if let Some(user) = user %}
+    <p>Logged in as {{ user.username }}</p>
+
+    {% if let Some(canvas_url) = canvas_url %}
+        <button
+            type="button"
+            onclick="navigator.clipboard.writeText('{{ canvas_url }}')">
+            Copy canvas URL
+        </button>
+    {% endif %}
+
+    <form
+        action="/canvas/access/regenerate"
+        method="post"
+        style="display: inline">
+        <button type="submit">
+            Regenerate canvas URL
+        </button>
+    </form>
+{% else %}
+    <a href="/auth/login">Login</a>
+{% endif %}
+{% endblock %}

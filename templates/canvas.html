@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #voice-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 4px solid rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="voice-circle"></div>
+
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+            const protocol =
+                window.location.protocol === "https:"
+                    ? "wss:"
+                    : "ws:";
+            const socket = new WebSocket(
+                `${protocol}//${window.location.host}/canvas/{{ token }}/ws`
+            );
+            socket.binaryType = "arraybuffer";
+            const AudioContext =
+                window.AudioContext ||
+                window.webkitAudioContext;
+            const audioContext = new AudioContext();
+            let nextAudioStartTime = 0;
+            let audioQueue = Promise.resolve();
+
+            async function queueAudio(arrayBuffer) {
+                if (audioContext.state === "suspended") {
+                    await audioContext.resume();
+                }
+
+                const audioBuffer =
+                    await audioContext.decodeAudioData(
+                        arrayBuffer
+                    );
+
+                const source =
+                    audioContext.createBufferSource();
+
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+
+                const startTime = Math.max(
+                    audioContext.currentTime,
+                    nextAudioStartTime
+                );
+
+                source.start(startTime);
+
+                nextAudioStartTime =
+                    startTime + audioBuffer.duration;
+            }
+
+            socket.addEventListener("open", () => {
+                console.log(
+                    "canvas websocket connected"
+                );
+            });
+
+            socket.addEventListener("message", event => {
+                if (event.data instanceof ArrayBuffer) {
+                    audioQueue = audioQueue
+                        .then(() => queueAudio(event.data))
+                        .catch(error => {
+                            console.error(
+                                "failed to play voice audio:",
+                                error
+                            );
+                        });
+
+                    return;
+                }
+
+                try {
+                    const message =
+                        JSON.parse(event.data);
+
+                    switch (message.type) {
+                        case "voice_start":
+                            console.log(
+                                "voice generation started"
+                            );
+                            break;
+
+                        case "voice_end":
+                            console.log(
+                                "voice generation finished"
+                            );
+                            break;
+
+                        default:
+                            console.debug(
+                                "unknown canvas message:",
+                                message
+                            );
+                            break;
+                    }
+                } catch (error) {
+                    console.error(
+                        "invalid canvas message:",
+                        error
+                    );
+                }
+            });
+
+            socket.addEventListener("close", event => {
+                console.log(
+                    "canvas websocket closed:",
+                    event.code,
+                    event.reason
+                );
+            });
+
+            socket.addEventListener("error", error => {
+                console.error(
+                    "canvas websocket error:",
+                    error
+                );
+            });
+
+            window.addEventListener(
+                "beforeunload",
+                () => {
+                    socket.close(
+                        1000,
+                        "canvas unloaded"
+                    );
+
+                    audioContext.close();
+                }
+            );
+        });
+    </script>
+</body>
+</html>
