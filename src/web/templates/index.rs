@@ -1,6 +1,6 @@
 use askama::Template;
 
-use crate::web::{templates::CommonTemplateData, SessionUser};
+use crate::web::{SessionUser, templates::CommonTemplateData};
 
 #[derive(Template, Debug)]
 #[template(path = "index.html")]

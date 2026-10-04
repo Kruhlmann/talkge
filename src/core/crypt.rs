@@ -1,4 +1,4 @@
-use rand::{distr::Alphanumeric, RngExt};
+use rand::{RngExt, distr::Alphanumeric};
 
 #[derive(Debug, Clone)]
 pub struct SecureString(pub String);

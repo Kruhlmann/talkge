@@ -149,9 +149,10 @@ impl LlamaTextStream {
                         );
                     }
                     if let Some(content) = choice.delta.content
-                        && !content.is_empty() {
-                            return Ok(Some(content));
-                        }
+                        && !content.is_empty()
+                    {
+                        return Ok(Some(content));
+                    }
                 }
                 continue;
             }
