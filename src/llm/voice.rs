@@ -5,8 +5,18 @@ use crate::{
     web::AppError,
 };
 
+#[async_trait::async_trait]
+pub trait VoiceClient: Send + Sync {
+    async fn generate(
+        &self,
+        prompt: &str,
+        tx: tokio::sync::mpsc::Sender<VoiceOutput>,
+    ) -> Result<(), AppError>;
+    fn should_speak(text: &str) -> bool;
+}
+
 #[derive(Clone)]
-pub struct VoiceClient {
+pub struct VoiceHttpClient {
     llama: LlamaClient,
     tts: TtsClient,
 }
@@ -18,12 +28,15 @@ pub enum VoiceOutput {
     Finished,
 }
 
-impl VoiceClient {
+impl VoiceHttpClient {
     pub fn new(llama: LlamaClient, tts: TtsClient) -> Self {
         Self { llama, tts }
     }
+}
 
-    pub async fn generate(
+#[async_trait::async_trait]
+impl VoiceClient for VoiceHttpClient {
+    async fn generate(
         &self,
         prompt: &str,
         tx: tokio::sync::mpsc::Sender<VoiceOutput>,

@@ -5,8 +5,7 @@ use sqlx::SqlitePool;
 use crate::{core::SecureString, web::AppError};
 
 #[async_trait::async_trait]
-pub trait AsyncCanvasAccess {
-    async fn migrate(&self) -> Result<(), AppError>;
+pub trait CanvasAccessStore: Clone + Send + Sync {
     async fn regenerate(&self, user_id: &str) -> Result<String, AppError>;
     async fn get_token(&self, user_id: &str) -> Result<Option<String>, AppError>;
     async fn user_id(&self, token: &str) -> Result<Option<String>, AppError>;
@@ -14,19 +13,17 @@ pub trait AsyncCanvasAccess {
 }
 
 #[derive(Clone)]
-pub struct CanvasAccessStore {
+pub struct CanvasAccessSqliteStore {
     pool: SqlitePool,
 }
 
-impl CanvasAccessStore {
-    pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+impl CanvasAccessSqliteStore {
+    pub async fn new(pool: SqlitePool) -> Result<Self, AppError> {
+        Self::migrate_db(&pool).await?;
+        Ok(Self { pool })
     }
-}
 
-#[async_trait::async_trait]
-impl AsyncCanvasAccess for CanvasAccessStore {
-    async fn migrate(&self) -> Result<(), AppError> {
+    async fn migrate_db(pool: &SqlitePool) -> Result<(), AppError> {
         sqlx::query(
             r#"CREATE TABLE IF NOT EXISTS canvas_access (
                 user_id TEXT PRIMARY KEY NOT NULL,
@@ -34,12 +31,15 @@ impl AsyncCanvasAccess for CanvasAccessStore {
                 created_at INTEGER NOT NULL
             )"#,
         )
-        .execute(&self.pool)
+        .execute(pool)
         .await?;
 
         Ok(())
     }
+}
 
+#[async_trait::async_trait]
+impl CanvasAccessStore for CanvasAccessSqliteStore {
     async fn regenerate(&self, user_id: &str) -> Result<String, AppError> {
         let SecureString(token) = SecureString::new(48);
         let created_at = SystemTime::now()

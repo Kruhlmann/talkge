@@ -21,17 +21,32 @@ pub struct TwitchCredentials {
     pub expires_at: i64,
 }
 
+#[async_trait::async_trait]
+pub trait TwitchCredentialsStore: Clone + Send + Sync {
+    async fn set(
+        &self,
+        user_id: &str,
+        login: &str,
+        access_token: &str,
+        refresh_token: &str,
+        expires_in: u64,
+    ) -> Result<(), AppError>;
+    async fn get(&self, user_id: &str) -> Result<Option<TwitchCredentials>, AppError>;
+    async fn delete(&self, user_id: &str) -> Result<(), AppError>;
+}
+
 #[derive(Clone)]
-pub struct TwitchCredentialsStore {
+pub struct TwitchCredentialsSqliteStore {
     pool: SqlitePool,
 }
 
-impl TwitchCredentialsStore {
-    pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+impl TwitchCredentialsSqliteStore {
+    pub async fn new(pool: SqlitePool) -> Result<Self, AppError> {
+        Self::migrate_db(&pool).await?;
+        Ok(Self { pool })
     }
 
-    pub async fn migrate(&self) -> Result<(), AppError> {
+    async fn migrate_db(pool: &SqlitePool) -> Result<(), AppError> {
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS twitch_credentials (
@@ -43,13 +58,16 @@ impl TwitchCredentialsStore {
             )
             "#,
         )
-        .execute(&self.pool)
+        .execute(pool)
         .await?;
 
         Ok(())
     }
+}
 
-    pub async fn set(
+#[async_trait::async_trait]
+impl TwitchCredentialsStore for TwitchCredentialsSqliteStore {
+    async fn set(
         &self,
         user_id: &str,
         login: &str,
@@ -93,7 +111,7 @@ impl TwitchCredentialsStore {
         Ok(())
     }
 
-    pub async fn get(&self, user_id: &str) -> Result<Option<TwitchCredentials>, AppError> {
+    async fn get(&self, user_id: &str) -> Result<Option<TwitchCredentials>, AppError> {
         let row = sqlx::query(
             r#"
             SELECT
@@ -119,7 +137,7 @@ impl TwitchCredentialsStore {
         }))
     }
 
-    pub async fn delete(&self, user_id: &str) -> Result<(), AppError> {
+    async fn delete(&self, user_id: &str) -> Result<(), AppError> {
         sqlx::query("DELETE FROM twitch_credentials WHERE user_id = ?")
             .bind(user_id)
             .execute(&self.pool)

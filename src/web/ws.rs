@@ -10,22 +10,22 @@ use crate::{
     web::AppError,
 };
 
-pub struct CanvasWebSocketClient {
+pub struct CanvasWebSocketClient<T: TwitchCredentialsStore, V: VoiceClient> {
     socket: WebSocket,
     user_id: String,
-    twitch_credentials: TwitchCredentialsStore,
+    twitch_credentials: T,
     voice_queue: VecDeque<VoiceRequest>,
     active_voice: Option<VoiceRequest>,
-    voice_client: Arc<VoiceClient>,
+    voice_client: Arc<V>,
     active_voice_task: Option<JoinHandle<Result<(), AppError>>>,
 }
 
-impl CanvasWebSocketClient {
+impl<T: TwitchCredentialsStore, V: VoiceClient + 'static> CanvasWebSocketClient<T, V> {
     pub fn new(
         socket: WebSocket,
         user_id: String,
-        twitch_credentials: TwitchCredentialsStore,
-        voice_client: Arc<VoiceClient>,
+        twitch_credentials: T,
+        voice_client: Arc<V>,
     ) -> Self {
         Self {
             socket,
@@ -173,12 +173,10 @@ impl CanvasWebSocketClient {
 
     fn start_voice_request(&mut self, request: VoiceRequest, tx: mpsc::Sender<VoiceOutput>) {
         let voice = Arc::clone(&self.voice_client);
-
         let prompt = format!(
             "Username: {}\nMessage: {}",
             request.username, request.message,
         );
-
         tracing::info!(
             username = request.username,
             message = request.message,
@@ -186,7 +184,6 @@ impl CanvasWebSocketClient {
         );
 
         self.active_voice = Some(request);
-
         self.active_voice_task = Some(tokio::spawn(async move {
             if tx.send(VoiceOutput::Started).await.is_err() {
                 return Ok(());
@@ -204,11 +201,9 @@ impl CanvasWebSocketClient {
         if let Some(task) = self.active_voice_task.take() {
             match task.await {
                 Ok(Ok(())) => {}
-
                 Ok(Err(error)) => {
                     tracing::error!(?error, "voice generation failed");
                 }
-
                 Err(error) => {
                     tracing::error!(?error, "voice generation task failed");
                 }

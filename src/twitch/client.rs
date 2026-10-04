@@ -9,15 +9,23 @@ use crate::{
     web::AppError,
 };
 
+#[async_trait::async_trait]
+pub trait TwitchClient: Send + Sync {
+    fn authorization_url(&self, oauth_state: &str) -> String;
+    async fn exchange_code(&self, code: &str) -> Result<TwitchTokenResponse, AppError>;
+    async fn current_user(&self, access_token: &str) -> Result<TwitchUser, AppError>;
+    async fn authenticate(&self, code: &str) -> Result<TwitchAuthentication, AppError>;
+}
+
 #[derive(Clone)]
-pub struct TwitchClient {
+pub struct TwitchHttpClient {
     http: Client,
     client_id: SecretString,
     client_secret: SecretString,
     redirect_url: String,
 }
 
-impl TwitchClient {
+impl TwitchHttpClient {
     pub fn new(client_id: SecretString, client_secret: SecretString, redirect_url: String) -> Self {
         Self {
             http: Client::new(),
@@ -26,8 +34,11 @@ impl TwitchClient {
             redirect_url,
         }
     }
+}
 
-    pub fn authorization_url(&self, oauth_state: &str) -> String {
+#[async_trait::async_trait]
+impl TwitchClient for TwitchHttpClient {
+    fn authorization_url(&self, oauth_state: &str) -> String {
         let client_id = self.client_id.clone().unmask();
         let mut url = TWITCH_OAUTH_URL.clone();
         url.query_pairs_mut()
@@ -39,7 +50,7 @@ impl TwitchClient {
         url.to_string()
     }
 
-    pub async fn exchange_code(&self, code: &str) -> Result<TwitchTokenResponse, AppError> {
+    async fn exchange_code(&self, code: &str) -> Result<TwitchTokenResponse, AppError> {
         let client_id = self.client_id.clone().unmask();
         let client_secret = self.client_secret.clone().unmask();
         let token = self
@@ -61,7 +72,7 @@ impl TwitchClient {
         Ok(token)
     }
 
-    pub async fn current_user(&self, access_token: &str) -> Result<TwitchUser, AppError> {
+    async fn current_user(&self, access_token: &str) -> Result<TwitchUser, AppError> {
         let client_id = self.client_id.clone().unmask();
         let response = self
             .http
@@ -81,7 +92,7 @@ impl TwitchClient {
             .ok_or_else(|| AppError::OAuth("twitch returned no user".into()))
     }
 
-    pub async fn authenticate(&self, code: &str) -> Result<TwitchAuthentication, AppError> {
+    async fn authenticate(&self, code: &str) -> Result<TwitchAuthentication, AppError> {
         let token = self.exchange_code(code).await?;
 
         let user = self.current_user(&token.access_token).await?;
