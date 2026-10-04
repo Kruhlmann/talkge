@@ -10,10 +10,11 @@ LLAMA_MODEL ?= model.gguf
 TTS_URL ?= http://localhost:8880
 TTS_VOICE ?= am_michael
 PUBLIC_URL ?= http://$(SERVER_HOST):$(SERVER_PORT)
+RUST_LOG ?= rustls_platform_verifier=info,sqlx=info,debug
 
 .PHONY: run
 run:
-	RUST_LOG=debug \
+	RUST_LOG=$(RUST_LOG) \
 	SERVER_HOST=$(SERVER_HOST) \
 	SERVER_PORT=$(SERVER_PORT) \
 	SESSIONS_DB_FILE=$(SESSIONS_DB_FILE) \

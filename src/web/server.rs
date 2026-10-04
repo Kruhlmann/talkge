@@ -3,23 +3,20 @@ use std::{str::FromStr, sync::Arc};
 use askama::Template;
 use axum::{
     Router,
-    body::Body,
     extract::{Path, Query, State, WebSocketUpgrade},
-    http::Response,
     response::{Html, Redirect},
     routing::{get, post},
 };
-use reqwest::header::{CACHE_CONTROL, CONTENT_TYPE};
-use tokio_stream::wrappers::ReceiverStream;
 use tower_http::services::ServeDir;
 use tower_sessions::{SessionManagerLayer, cookie::SameSite};
 
 use crate::{
     core::{SecureString, TalkgeConfiguration},
-    llm::{LlamaClient, TtsClient, VoiceClient, VoiceOutput},
+    llm::{LlamaClient, TtsClient, VoiceClient},
     twitch::{TwitchClient, TwitchCredentialsStore, TwitchOAuthCallback},
     web::{
-        AppError, AppSession, CanvasAccessStore, CanvasWebSocketClient, SessionUser,
+        AppError, AppSession, AsyncCanvasAccess, CanvasAccessStore, CanvasWebSocketClient,
+        SessionUser,
         templates::{CanvasTemplate, IndexTemplate},
     },
 };

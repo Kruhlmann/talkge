@@ -2,6 +2,8 @@
 <html>
 <head>
     <title>{{ common.software.name }} v{{ common.software.version }}</title>
+    <link rel="stylesheet" href="/assets/css/base.css">
+    {% block head %}{% endblock %}
 </head>
 <body>
     {% block content %}{% endblock %}

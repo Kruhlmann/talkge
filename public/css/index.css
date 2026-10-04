@@ -1,0 +1,82 @@
+body, html {
+    height: 100vh;
+    color: white;
+    background-color: #333;
+    font-size: 20px;
+}
+
+h1 {
+    font-size: 42px;
+}
+
+.inline {
+    display: inline;
+}
+
+section.control-panel {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-gap: 24px;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: max-content max-content;
+    padding: 24px;
+}
+
+section.control-panel > h1 {
+    line-height: 78px;
+}
+
+section.canvas-settings {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-gap: 12px;
+    grid-column: span 2;
+    grid-auto-rows: max-content;
+    padding: 12px;
+    align-items: center;
+    align-content: start;
+    background-color: #444;
+}
+
+.input-label {
+    font-size: 24px;
+}
+
+.inputs {
+    display: grid;
+    grid-gap: 8px;
+    grid-template-columns: 1fr;
+    grid-auto-columns: max-content;
+    grid-auto-flow: column;
+
+    grid-auto-rows: max-content;
+    align-content: start;
+}
+
+section.login {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+a.button {
+    background-color: #9147ff;
+    padding: 24px 12px;
+    font-size: 24px;
+    text-decoration: none;
+    text-align: center;
+    width: 250px;
+    border: 3px solid #7127dd;
+    transition: background-color 0.3s ease-in-out;
+    color: white;
+}
+
+a.button:hover {
+    background-color: #8137ee;
+}

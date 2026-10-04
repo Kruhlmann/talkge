@@ -1,26 +1,36 @@
 {% extends "base.html" %}
 
+{% block head %}
+<link rel="stylesheet" href="/assets/css/index.css">
+{% endblock %}
+
 {% block content %}
 {% if let Some(user) = user %}
-    <p>Logged in as {{ user.username }}</p>
+<section class="control-panel">
+    <h1>Welcome back {{ user.username }}</h1>
+    <a class="button" href="/auth/logout">Logout</a>
 
-    {% if let Some(canvas_url) = canvas_url %}
-        <button
-            type="button"
-            onclick="navigator.clipboard.writeText('{{ canvas_url }}')">
-            Copy canvas URL
-        </button>
-    {% endif %}
-
-    <form
-        action="/canvas/access/regenerate"
-        method="post"
-        style="display: inline">
-        <button type="submit">
-            Regenerate canvas URL
-        </button>
-    </form>
+    <section class="canvas-settings">
+        <span class="input-label">Canvas URL</span>
+        <div class="inputs">
+            {% if let Some(canvas_url) = canvas_url %}
+                <input type="text" disabled value="{{ canvas_url }}"/>
+                <button type="button" onclick="navigator.clipboard.writeText('{{ canvas_url }}')">Copy</button>
+                <form class="inline" action="/canvas/access/regenerate" method="post">
+                    <button type="submit">Regenerate</button>
+                </form>
+            {% else %}
+                <button type="button" disabled>Copy</button>
+                <form class="inline" action="/canvas/access/regenerate" method="post">
+                    <button type="submit">Create</button>
+                </form>
+            {% endif %}
+    </section>
+</section>
 {% else %}
-    <a href="/auth/login">Login</a>
+<section class="login">
+    <h1>{{ common.software.name }} {{ common.software.version }}</h1>
+    <a class="button" href="/auth/login">Login with Twitch</a>
+</section>
 {% endif %}
 {% endblock %}
