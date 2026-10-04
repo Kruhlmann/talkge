@@ -8,7 +8,6 @@ const TWITCH_IRC_URL: &str = "wss://irc-ws.chat.twitch.tv:443";
 
 pub struct TwitchChatClient {
     socket: WebSocketStream<MaybeTlsStream<TcpStream>>,
-    login: String,
 }
 
 impl TwitchChatClient {
@@ -32,7 +31,7 @@ impl TwitchChatClient {
             "connected to twitch chat"
         );
 
-        Ok(Self { socket, login })
+        Ok(Self { socket })
     }
 
     pub async fn next_message(&mut self) -> Result<Option<TwitchChatMessage>, AppError> {
